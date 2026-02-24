@@ -1,0 +1,67 @@
+
+volumes:
+  data:
+    driver: local
+
+networks:
+  embalagens-pamplona-network:
+    driver: bridge
+
+services:
+
+  mysql:
+    container_name: "mysql-container-dev"
+    image: 'mysql:8.0'
+    env_file:
+      - .env.dev
+    environment:
+      - 'MYSQL_DATABASE=embalagens_pamplona'
+      - 'MYSQL__PASSWORD=password'
+      - 'MYSQL_USER_ROOT=root'
+    ports:
+      - '${MYSQL_PORT}:${MYSQL_PORT}'
+
+  redis:
+    env_file:
+      - .env.dev
+    container_name: "redis-container-dev"
+    image: 'redis:latest'
+    profiles:
+      - dev
+    environment:
+      REDIS_PORT: ${REDIS_PORT}
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+
+  server-api:
+
+    env_file:
+      - .env.dev
+    container_name: "api-embalagens-pamplona"
+    build: ./
+    volumes:
+      - .m2:/root/.m2
+    networks:
+      - embalagens-pamplona-network
+    environment:
+      API_PORT: ${API_PORT}
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.DRIVER
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_URL: jdbc:h2:mem:embalagenspamplona
+    ports:
+      - "${API_PORT}:${API_PORT}"
+
+se eu quiser usar .env.dev eu poderia fazer em vez de build:./
+build:
+    context:./
+    args:
+      - ENV_FILE=.env.dev
+    env_file:
+      - .env.dev
+
+  ai no docker file eu poderia fazer
+
+
+

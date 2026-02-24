@@ -1,0 +1,53 @@
+volumes:
+  data:
+    driver: local
+
+networks:
+  embalagens-pamplona-network:
+    driver: bridge
+
+services:
+  mysql:
+    container_name: "mysql-containe-prod"
+    image: 'mysql:8.0'
+    volumes:
+      - data:/var/lib/mysql
+    networks:
+      - embalagens-pamplona-network
+    environment:
+      - 'MYSQL_DATABASE=mydatabase'
+      - 'MYSQL_PASSWORD=secret'
+      - 'MYSQL_USER=myuser'
+    ports:
+      - '${MYSQL_PORT}:{MYSQL_PORT}'
+    restart: unless-stopped
+
+  redis:
+    image: 'redis:latest'
+    profiles:
+      - prod
+    environment:
+      REDIS_PORT: ${REDIS_PORT}
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+
+  server-api:
+    container_name: "api-embalagens-pamplona-prod"
+    build: ./
+    volumes:
+      - .m2:/root/.m2
+    networks:
+      - embalagens-pamplona-network
+    links:
+      - mysql
+    environment:
+      API_PORT: ${API_PORT}
+      SQL_PORT: ${SQL_PORT}
+      DB_NAME: ${DB_NAME}
+      SQL_ADDRESS: ${SQL_ADDRESS}
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_DRIVER: com.mysql.cj.jdbc.Driver
+      SPRING_DATASOURCE_URL: jdbc://${SQL_ADDRESS}:${SQL_PORT}/${DB_NAME}
+    depends_on:
+      - mysql
+

@@ -1,0 +1,58 @@
+volumes:
+  data:
+    driver: local
+
+networks:
+  embalagens-pamplona-network:
+    driver: bridge
+
+services:
+
+  mysql:
+    container_name: "mysql-container-dev"
+    image: 'mysql:8.0'
+    env_file:
+      - path: .env.dev
+        required: true
+    environment:
+      - 'MYSQL_DATABASE=embalagens_pamplona'
+      - 'MYSQL_ROOT_PASSWORD=password'
+      - 'MYSQL_USER_ROOT=root'
+    ports:
+      - '${MYSQL_PORT}:3306'
+
+  redis:
+    env_file:
+      - path: .env.dev
+        required: true
+    container_name: "redis-container-dev"
+    image: 'redis:latest'
+    environment:
+      REDIS_PORT: ${REDIS_PORT}
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+
+  server-api:
+    env_file:
+      - path: ./.env.dev
+        required: true
+    container_name: "api-embalagens-pamplona"
+    build: ./
+    volumes:
+      - .m2:/root/.m2
+    networks:
+      - embalagens-pamplona-network
+    environment:
+      API_PORT: ${API_PORT}
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      JWT_KEY: ${JWT_KEY}
+    ports:
+      - "${API_PORT}:${API_PORT}"
+
+
+
+
