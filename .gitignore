@@ -9,14 +9,15 @@
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
-./src/main/resources/application-dev-local.properties
-./rascunhos
+
+/rascunhos
 .env.dev
 .env
-./build
-./gradle
-./kotlin
-./.gradle
+/build
+/gradle
+/kotlin
+/.gradle
+/src/main/resources/application-dev-local.properties
 
 # Package Files #
 *.jar
