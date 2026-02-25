@@ -52,7 +52,7 @@ dependencies {
     implementation("org.springframework.security:spring-security-rsocket")
     implementation("org.springframework.session:spring-session-data-redis")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.15")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.modelmapper:modelmapper:3.2.6")
     compileOnly("org.projectlombok:lombok")

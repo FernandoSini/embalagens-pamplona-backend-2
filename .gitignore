@@ -11,6 +11,13 @@
 .mtj.tmp/
 ./src/main/resources/application-dev-local.properties
 ./rascunhos
+.env.dev
+.env
+./build
+./gradle
+./kotlin
+./.gradle
+
 # Package Files #
 *.jar
 *.war

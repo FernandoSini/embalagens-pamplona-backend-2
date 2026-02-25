@@ -22,6 +22,7 @@ import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -48,21 +49,21 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
     @Bean
     fun filterChain(http: HttpSecurity, jwtFilter: JwtFilter): SecurityFilterChain {
         http
-            .headers { it ->
-                //protecao contra xss
-                it.xssProtection {
-                    it.headerValue(XXssProtectionHeaderWriter.HeaderValue.DISABLED)
-                }.contentSecurityPolicy { it ->
-                    it.policyDirectives("script-src 'self'")
-                }.httpStrictTransportSecurity {
-                    it.maxAgeInSeconds(31536000)
-                }.frameOptions { it.sameOrigin() }
-            }
+            /* .headers { it ->
+                 //protecao contra xss
+                 it.xssProtection {
+                     it.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
+                 }.contentSecurityPolicy { it ->
+                     it.policyDirectives("script-src 'self'")
+                 }.httpStrictTransportSecurity {
+                     it.maxAgeInSeconds(31536000)
+                 }.frameOptions { it.sameOrigin() }
+             }*/
             .httpBasic { it.disable() }
-            .cors {
+          /*  .cors {
                 it.configurationSource(corsConfigurationSource())
-            }
-            .csrf { it.disable() }
+            }*/
+         /*   .csrf { it.disable() }*/
             .csrf { CookieCsrfTokenRepository.withHttpOnlyFalse() }
             .sessionManagement {
                 it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
@@ -73,6 +74,7 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
             .authorizeHttpRequests { auth ->
                 // Endpoints públicos
                 auth.requestMatchers(
+                    "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**",
                     "/h2/**",
                     "/swagger",
                     "/api/v1/catalog/**",
@@ -85,6 +87,9 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
                     "/api/stripe/**",
                     "/api/docs/**",
                     "/swagger/**",
+                    "/swagger-ui.html",
+                    "/swagger-ui/index.html",
+                    "/api/v1/auth"
                 ).permitAll()
                 // Endpoints que requerem autenticação
                 auth.requestMatchers(
@@ -92,20 +97,15 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
                     "/api/v1/orders/**",
                     "/api/v1/customers/**",
                     "/api/v1/payments/**",
-
-                    "/swagger-ui.html",
                 ).authenticated() // TODO: Alterar para authenticated() após implementar JWT
-                // .anyRequest().authenticated()
-
+                 .anyRequest().authenticated()
             }.authenticationProvider(authenticationProvider).exceptionHandling {
                 /* it.disable()*/
                 it.authenticationEntryPoint { request, response, exception -> authenticationEntryPoint() }
                 Customizer.withDefaults<CustomExceptionHandler>()
                 it.accessDeniedPage("/error")
-            }/*.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)*/
-
-           /* .formLogin { it.successHandler(customAuthenticationSuccessHandler()) }*/
-
+            }.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
+            /* .formLogin { it.successHandler(customAuthenticationSuccessHandler()) }*/
             .logout {
                 it.logoutUrl("/logout")
                 it.logoutSuccessUrl("/auth/login").invalidateHttpSession(true)
@@ -131,6 +131,8 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
         return source
     }
 
+
+
     @Bean
     fun authenticationEntryPoint(): AuthenticationEntryPoint {
         return CustomAuthenticationEntryPoint()
@@ -146,23 +148,6 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
         val mailSender = JavaMailSenderImpl()
         return mailSender
     }
-
-
- /*   @Bean
-    fun jwtFilter(): JwtFilter {
-        return JwtFilter(tokenService())
-    }
-    @Bean
-    fun tokenService(): TokenService =
-        TokenServiceImpl()
-
-    @Bean
-    fun userServiceImpl(userRepository: UserRepository): UserDetailsService {
-        return UserServiceImpl();
-    }*/
-
-
-
 
     @Bean
     fun AuthenticationManager(config: AuthenticationConfiguration): AuthenticationManager {
