@@ -13,11 +13,11 @@
 /rascunhos
 .env.dev
 .env
-/build
-/gradle
-/kotlin
-/.gradle
-/src/main/resources/application-dev-local.properties
+build/
+gradle/
+.kotlin/
+.gradle/
+src/main/resources/application-dev-local.properties
 
 # Package Files #
 *.jar
