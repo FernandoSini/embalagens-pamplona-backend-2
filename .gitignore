@@ -14,7 +14,6 @@
 .env.dev
 .env
 build/
-gradle/
 .kotlin/
 .gradle/
 src/main/resources/application-dev-local.properties

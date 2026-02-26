@@ -9,19 +9,26 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.InternalAuthenticationServiceException
 import org.springframework.security.core.AuthenticationException
+import org.springframework.stereotype.Controller
 import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.context.request.WebRequest
+import org.springframework.web.reactive.result.method.annotation.ResponseEntityExceptionHandler
+
 import java.time.ZonedDateTime
 
-@RestControllerAdvice
-class CustomExceptionHandler {
+//@RestControllerAdvice
+@Controller
+@ControllerAdvice
+class CustomExceptionHandler: ResponseEntityExceptionHandler() {
 
     private val logger = LoggerFactory.getLogger(CustomExceptionHandler::class.java)
 
     @ExceptionHandler(exception = [Exception::class, InternalAuthenticationServiceException::class, AuthenticationException::class])
-    fun handleException(e: Exception, request: WebRequest): ResponseEntity<Any> {
+    //@ExceptionHandler(Exception::class)
+     fun handleException(e: Exception, request: WebRequest): ResponseEntity<Any> {
         val exceptionResponse = ErrorResponse(
             timestamp = ZonedDateTime.now(),
             message = e.message,

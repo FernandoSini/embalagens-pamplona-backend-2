@@ -39,7 +39,6 @@ class CartController(private val cartService: CartService
         return ResponseEntity.ok(ApiResponse.success(cart, "Carrinho atualizado com sucesso"))
     }
 
-    @PutMapping
     @OptIn(ExperimentalEncodingApi::class)
     @GetMapping("/")
     @Operation(summary = "Obter carrinho do cliente")
