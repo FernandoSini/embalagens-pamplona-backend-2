@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 @RequestMapping("/api/v1/auth")
 class AuthController(private val authService: AuthService) {
 
-
     @PostMapping("/login")
     fun login(@RequestBody request: HashMap<String, Any>): ResponseEntity<ApiResponse<UserDTO>> {
         val response = authService.authenticate(request) ?: throw NotFoundException(Exception("Usuário não encontrado"))

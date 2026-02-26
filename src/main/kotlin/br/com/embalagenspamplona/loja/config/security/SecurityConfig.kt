@@ -49,21 +49,12 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
     @Bean
     fun filterChain(http: HttpSecurity, jwtFilter: JwtFilter): SecurityFilterChain {
         http
-            /* .headers { it ->
-                 //protecao contra xss
-                 it.xssProtection {
-                     it.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
-                 }.contentSecurityPolicy { it ->
-                     it.policyDirectives("script-src 'self'")
-                 }.httpStrictTransportSecurity {
-                     it.maxAgeInSeconds(31536000)
-                 }.frameOptions { it.sameOrigin() }
-             }*/
+            .anonymous { it.disable() }
             .httpBasic { it.disable() }
-          /*  .cors {
-                it.configurationSource(corsConfigurationSource())
-            }*/
-         /*   .csrf { it.disable() }*/
+              .cors {
+                  it.configurationSource(corsConfigurationSource())
+              }
+            /*   .csrf { it.disable() }*/
             .csrf { CookieCsrfTokenRepository.withHttpOnlyFalse() }
             .sessionManagement {
                 it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
@@ -77,7 +68,6 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
                     "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**",
                     "/h2/**",
                     "/swagger",
-                    "/api/v1/catalog/**",
                     "/api/v1/products/**",
                     "/api/v1/segments/**",
                     "/api/v1/auth/**",
@@ -89,22 +79,35 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
                     "/swagger/**",
                     "/swagger-ui.html",
                     "/swagger-ui/index.html",
+                    "/swagger-ui/**",
                     "/api/v1/auth"
                 ).permitAll()
                 // Endpoints que requerem autenticação
                 auth.requestMatchers(
+                    "/api/v1/catalog/**",
                     "/api/v1/cart/**",
                     "/api/v1/orders/**",
                     "/api/v1/customers/**",
                     "/api/v1/payments/**",
                 ).authenticated() // TODO: Alterar para authenticated() após implementar JWT
-                 .anyRequest().authenticated()
+                    .anyRequest().authenticated()
             }.authenticationProvider(authenticationProvider).exceptionHandling {
                 /* it.disable()*/
-                it.authenticationEntryPoint { request, response, exception -> authenticationEntryPoint() }
+                it.authenticationEntryPoint(authenticationEntryPoint())
                 Customizer.withDefaults<CustomExceptionHandler>()
-                it.accessDeniedPage("/error")
+             /*   it.accessDeniedPage("/error")*/
             }.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .headers { it ->
+                //protecao contra xss
+                it.xssProtection {
+                    it.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
+                }.contentSecurityPolicy { it ->
+                    it.policyDirectives("script-src 'self'")
+                }.httpStrictTransportSecurity {
+                    it.maxAgeInSeconds(31536000)
+                }.frameOptions { it.sameOrigin() }
+                    .contentTypeOptions { it.disable() }
+            }
             /* .formLogin { it.successHandler(customAuthenticationSuccessHandler()) }*/
             .logout {
                 it.logoutUrl("/logout")
@@ -125,12 +128,12 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
         configuration.exposedHeaders = listOf("Authorization")
+        configuration.allowCredentials=true
 
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)
         return source
     }
-
 
 
     @Bean

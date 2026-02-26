@@ -11,13 +11,13 @@ import java.util.UUID
 import javax.swing.text.Segment
 
 @RestController
-@RequestMapping("/api/v1/catalog")
+@RequestMapping("/api/v1/catalog",)
 @Tag(name = "Catálogo", description = "Acesso ao catálogo de produtos")
 class CatalogController(
     private val catalogService: CatalogService
 ) {
 
-    @GetMapping
+    @GetMapping("/")
     @Operation(summary = "Obter catálogo completo (segmentos, destaques e promoções)")
     fun getCatalog(
         @RequestBody(required = false) selectedCategory: CategoryDTO?,

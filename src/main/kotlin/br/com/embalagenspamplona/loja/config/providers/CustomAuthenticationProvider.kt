@@ -17,7 +17,8 @@ class CustomAuthenticationProvider: AuthenticationProvider{
                 throw InternalAuthenticationServiceException("Internal Authentication Provider is not authenticated")
             }
         }catch (e: InternalAuthenticationServiceException){
-            throw NotFoundException(e)
+          //  throw NotFoundException(e)
+            throw e
         }
 
     }
