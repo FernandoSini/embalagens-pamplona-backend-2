@@ -7,10 +7,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(value = "jwt", ignoreUnknownFields = false)
 data class JwtProperties(
-    val key:String,
+    @param:NotBlank
+    @param:Value("\${jwt.key}") val key:String,
     @param:NotBlank
     @param:Value("\${jwt.access-token-expiration}") val accessTokenExpiration: Long,
     @param:NotBlank
     @param:Value("\${jwt.refresh-token-expiration}") val refreshTokenExpiration:Long,
 
-)
+    )

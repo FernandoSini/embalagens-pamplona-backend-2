@@ -7,6 +7,7 @@ import br.com.embalagenspamplona.loja.services.CustomerService
 import br.com.embalagenspamplona.loja.services.UserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -16,7 +17,7 @@ import java.util.UUID
 @RequestMapping("/api/v1/customers")
 @Tag(name = "Clientes", description = "Gerenciamento de clientes")
 class CustomerController(
-    private val customerService: UserService,
+    @param:Qualifier("userDetailsService") private val customerService: UserService,
     private val addressService: AddressService,
 ) {
 

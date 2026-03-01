@@ -34,7 +34,10 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
 @Service
-class TokenServiceImpl : TokenService {
+class TokenServiceImpl(
+    private val userDetailsService: UserDetailsService,
+    private val redisTemplate: RedisTemplate<String, Any>
+) : TokenService {
 
     @Value("\${jwt.key}")
     private val secretKey: String = ""
@@ -46,23 +49,24 @@ class TokenServiceImpl : TokenService {
     private val accessTokenExpiration: Long = 0L
 
     private lateinit var signingKey: SecretKeySpec
-    private lateinit var redisTemplate: RedisTemplate<String, Any>
+    /* private lateinit var redisTemplate: RedisTemplate<String, Any>*/
 
 
-    @Qualifier("userDetailsService")
-    @Autowired
-    private lateinit var userServiceImpl: UserDetailsService
+    /* @Qualifier("userDetailsService")
+     @Autowired
+     private lateinit var userServiceImpl: UserDetailsService*/
 
     @OptIn(ExperimentalEncodingApi::class)
     @PostConstruct
     fun initTokenService() {
-     /*   val keyBytes = try {
-            Base64.decode(secretKey)
-        } catch (e: IllegalArgumentException) {
-            secretKey.toByteArray(Charsets.UTF_8)
-        }*/
+        /*   val keyBytes = try {
+               Base64.decode(secretKey)
+           } catch (e: IllegalArgumentException) {
+               secretKey.toByteArray(Charsets.UTF_8)
+           }*/
+
         val bytes = Base64.decode(secretKey)
-        signingKey = SecretKeySpec(bytes,0,bytes.size, "HmacSHA256")
+        signingKey = SecretKeySpec(bytes, 0, bytes.size, "HmacSHA256")
     }
 
     override fun generateToken(
@@ -102,7 +106,7 @@ class TokenServiceImpl : TokenService {
     ): Authentication? {
         try {
             val subject = Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).payload.subject
-            val userInfo = userServiceImpl.loadUserByUsername(subject)
+            val userInfo = userDetailsService.loadUserByUsername(subject)
             if (userInfo != null) {
                 return UsernamePasswordAuthenticationToken(userInfo, "", userInfo.authorities)
             } else {
@@ -113,7 +117,6 @@ class TokenServiceImpl : TokenService {
         }
 
     }
-
 
 
     override fun resolveToken(request: HttpServletRequest): String? {
@@ -149,6 +152,6 @@ class TokenServiceImpl : TokenService {
     override fun getUserInfo(token: String): UserDetails? {
         val extractedUser = Jwts.parser().verifyWith(signingKey).build()
             .parseSignedClaims(token).payload.subject
-        return userServiceImpl.loadUserByUsername(extractedUser)
+        return userDetailsService.loadUserByUsername(extractedUser)
     }
 }

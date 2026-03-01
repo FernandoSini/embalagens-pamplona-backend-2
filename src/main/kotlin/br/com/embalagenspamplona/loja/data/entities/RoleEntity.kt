@@ -19,45 +19,47 @@ import java.time.ZonedDateTime
 
 @Entity
 @Table(name = "roles")
- class RoleEntity(
+class RoleEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "role_id")
-    private var id: Long? = null,
+    private var id: Long = 1L,
 
     @Column(name = "name")
     private var name: String = "",
     @Column(name = "description")
     private var description: String = "",
 
-
     @Column(name = "created_at")
     private var createdAt: ZonedDateTime? = ZonedDateTime.now(),
 
     @OneToMany(mappedBy = "role")
-    private val list: MutableList<UserEntity> =mutableListOf(),
-
+    private val userList: MutableList<UserEntity> = mutableListOf(),
 
     @Column(name = "updated_at")
     private var updatedAt: ZonedDateTime? = null
-) : Serializable, GrantedAuthority {
-    override fun getAuthority(): String? {
+) : GrantedAuthority, Serializable {
+    override fun getAuthority(): String {
         return name
     }
 
-    fun getDescription(): String? {
+    fun getDescription(): String {
         return description;
     }
 
+    fun addUser(user: UserEntity) {
+        userList.add(user)
+    }
+
     fun copy(
-        id: Long? = this.id,
+        id: Long = this.id,
         name: String = this.name,
         description: String = this.description,
         createdAt: ZonedDateTime? = this.createdAt,
-        list: MutableList<UserEntity> = this.list,
+        list: MutableList<UserEntity> = this.userList,
         updatedAt: ZonedDateTime? = this.updatedAt
     ) = RoleEntity(
         id = id, name = name, description = description,
-        createdAt = createdAt, list = list, updatedAt = updatedAt
+        createdAt = createdAt, userList = list, updatedAt = updatedAt
     )
 }

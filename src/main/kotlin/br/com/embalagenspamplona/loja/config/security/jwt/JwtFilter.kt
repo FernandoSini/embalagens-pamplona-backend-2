@@ -27,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.web.filter.GenericFilterBean
 import java.time.ZonedDateTime
@@ -45,14 +46,17 @@ class JwtFilter(private val tokenService: TokenService) : GenericFilterBean() {
     ) {
         val resolvedToken = tokenService.resolveToken(request as HttpServletRequest)
 
-        if (resolvedToken != null && tokenService.isTokenValid(resolvedToken, null)) {
+
             try {
+                if (resolvedToken != null && tokenService.isTokenValid(resolvedToken, null)) {
                 val authentication = tokenService.getAuthentication(resolvedToken, null)
                 if (authentication != null) {
                     updateContext(authentication, request)
                 } else {
                     throw NotFoundException(Exception("User not found on auth!"))
                 }
+        }
+                filter?.doFilter(request, response)
             } catch (e: JwtException) {
                 (response as HttpServletResponse).status = HttpStatus.BAD_REQUEST.value()
                 (response).writer.print("JwtException" + e.message.toString())
@@ -90,12 +94,6 @@ class JwtFilter(private val tokenService: TokenService) : GenericFilterBean() {
 
             }
 
-        } /*else {
-
-                //throw ForbiddenException(Exception("Acesso não autorizado! Faça o login para poder acessar esta área!"))
-            }*/
-
-        filter?.doFilter(request, response)
 
 
 

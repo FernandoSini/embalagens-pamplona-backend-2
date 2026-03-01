@@ -54,7 +54,7 @@ class AddressServiceImpl(
         }
         address.street = updatedAddress.street
         val savedEntity = addressRepository.save(address)
-        val dto = Mapper().mapTo(savedEntity, AddressDTO::class.java)
+        val dto = Mapper().mapTo(savedEntity::class.java, AddressDTO::class.java)
         if (dto == null) throw InternalServerException(Exception("Os dados foram atualizados mas houve um erro na conversão"))
         return dto
     }
