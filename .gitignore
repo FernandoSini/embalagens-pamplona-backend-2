@@ -17,7 +17,7 @@ build/
 .kotlin/
 .gradle/
 src/main/resources/application-dev-local.properties
-
+/.gradle
 # Package Files #
 *.jar
 *.war
