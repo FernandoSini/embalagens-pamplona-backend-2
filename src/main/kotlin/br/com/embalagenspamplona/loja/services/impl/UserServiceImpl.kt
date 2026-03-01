@@ -11,6 +11,7 @@ import br.com.embalagenspamplona.loja.repository.datasource.local.AddressReposit
 import br.com.embalagenspamplona.loja.repository.datasource.local.UserRepository
 import br.com.embalagenspamplona.loja.services.UserService
 import org.hibernate.annotations.NotFound
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetails
@@ -20,10 +21,11 @@ import java.time.ZonedDateTime
 
 @Service("userDetailsService")
 class UserServiceImpl(
+    private val userRepository: UserRepository
+) : UserDetailsService, UserService {
 
-) :UserService, UserDetailsService {
-
-    private lateinit var userRepository: UserRepository
+    /* @Autowired
+     private lateinit var userRepository: UserRepository*/
 
     override fun loadUserByUsername(data: String?): UserDetails? {
         try {
@@ -31,16 +33,16 @@ class UserServiceImpl(
                 return null
             } else {
                 val user = userRepository.findUserEntityByEmailOrName(data).orElseThrow {
-                    NotFoundException(Exception("Usuário não encontrado com esse email"))
+                    throw NotFoundException(Exception("Usuário não encontrado com esse email"))
                 }
-                return User.builder().username(user.name ?: user.email)
+                return User.builder().username(user.id.toString() ?: user.email)
                     .password(user.password)
                     .roles(user.authorities.toString())
                     .build()
             }
         } catch (e: Exception) {
 
-            throw NotFoundException(Exception(e))
+            throw e
         }
 
     }
@@ -53,9 +55,15 @@ class UserServiceImpl(
         val user = userRepository.findByEmail(email).orElseThrow {
             throw NotFoundException(Exception("User not found Exception!"))
         }
-        val mappedUser = Mapper().mapTo(user::class.java, UserDTO::class.java)
+        val mappedUser = Mapper().mapTo(user, UserDTO::class.java)
         return mappedUser
+    }
 
+    override fun findByEmailOrName(emailOrName: String): UserDTO? {
+        val user = userRepository.findUserEntityByEmailOrName(emailOrName).orElseThrow {
+            throw NotFoundException(Exception("User not found Exception!"))
+        }
+        return Mapper().mapTo(user, UserDTO::class.java)
     }
 
     override fun update(userObject: UserDTO): Boolean {
@@ -102,14 +110,16 @@ class UserServiceImpl(
     }
 
     override fun createUser(userEntity: UserEntity): UserDTO? {
-        val existUser = userRepository.findByEmail(userEntity.email.toString())
+        val existUser = userRepository.findByEmail(userEntity.email)
         if (existUser.isEmpty || !existUser.isPresent) {
 
 
             val createdUser = userRepository.save(userEntity)
-            return Mapper().mapTo(createdUser::class, UserDTO::class.java)
+
+            return Mapper().mapTo(createdUser, UserDTO::class.java)
+            //return createdUser
         } else {
-            throw BadRequestException(Exception("Usuário já existente"))
+            return null
         }
     }
 

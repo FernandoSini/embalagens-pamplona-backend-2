@@ -51,16 +51,19 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
         http
             .anonymous { it.disable() }
             .httpBasic { it.disable() }
-              .cors {
-                  it.configurationSource(corsConfigurationSource())
-              }
+            .cors {
+                it.configurationSource(corsConfigurationSource())
+            }
             /*   .csrf { it.disable() }*/
-            .csrf { CookieCsrfTokenRepository.withHttpOnlyFalse() }
+            .csrf {
+                it.disable()
+                CookieCsrfTokenRepository.withHttpOnlyFalse()
+            }
             .sessionManagement {
-                it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                it.invalidSessionUrl("/api/v1/auth/invalid-session")
-                it.sessionAuthenticationErrorUrl("/api/v1/auth/login-error")
-                it.sessionAuthenticationStrategy(ChangeSessionIdAuthenticationStrategy())
+                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                /*   it.invalidSessionUrl("/api/v1/auth/invalid-session")
+                   it.sessionAuthenticationErrorUrl("/api/v1/auth/login-error")
+                   it.sessionAuthenticationStrategy(ChangeSessionIdAuthenticationStrategy())*/
             }
             .authorizeHttpRequests { auth ->
                 // Endpoints públicos
@@ -80,8 +83,8 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
                     "/swagger-ui.html",
                     "/swagger-ui/index.html",
                     "/swagger-ui/**",
-                    "/api/v1/auth"
-                ).permitAll()
+
+                    ).permitAll()
                 // Endpoints que requerem autenticação
                 auth.requestMatchers(
                     "/api/v1/catalog/**",
@@ -95,7 +98,7 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
                 /* it.disable()*/
                 it.authenticationEntryPoint(authenticationEntryPoint())
                 Customizer.withDefaults<CustomExceptionHandler>()
-             /*   it.accessDeniedPage("/error")*/
+                /*   it.accessDeniedPage("/error")*/
             }.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
             .headers { it ->
                 //protecao contra xss
@@ -128,13 +131,12 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
         configuration.exposedHeaders = listOf("Authorization")
-        configuration.allowCredentials=true
+        configuration.allowCredentials = true
 
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)
         return source
     }
-
 
     @Bean
     fun authenticationEntryPoint(): AuthenticationEntryPoint {
@@ -156,6 +158,30 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
     fun AuthenticationManager(config: AuthenticationConfiguration): AuthenticationManager {
         return config.authenticationManager
     }
+
+    @Bean
+    fun jwtFilter(tokenService: TokenService): JwtFilter{
+        return JwtFilter(tokenService)
+    }
+    /*@Bean
+    fun userDetailsService(userRepository: UserRepository): UserDetailsService {
+        return UserServiceImpl(userRepository)
+    }
+
+    @Bean
+    fun userService(userRepository: UserRepository): UserService {
+        return UserServiceImpl(userRepository)
+    }*/
+
+    /*@Bean
+    fun tokenService(userRepository: UserRepository): TokenService {
+        return TokenServiceImpl(userDetailsService(userRepository))
+    }
+
+    @Bean
+    fun jwtFilter(tokenService: TokenService): JwtFilter {
+        return JwtFilter(tokenService)
+    }*/
 
 
 }

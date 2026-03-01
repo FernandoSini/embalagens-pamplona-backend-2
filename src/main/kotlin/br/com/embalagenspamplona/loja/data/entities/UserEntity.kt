@@ -59,8 +59,8 @@ import java.time.ZonedDateTime
     val emailVerified: Boolean = false,
 
     @ManyToOne
-    @JoinColumn(name = "user_role", referencedColumnName = "role_id", foreignKey = ForeignKey(name = "fk_role_id"))
-    val role: RoleEntity? = null,
+    @JoinColumn(name = "user_role", referencedColumnName = "role_id", foreignKey = ForeignKey(name = "fk_user_role_id"))
+    var role: RoleEntity? = null,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: ZonedDateTime = ZonedDateTime.now(),
@@ -71,7 +71,7 @@ import java.time.ZonedDateTime
     override fun getAuthorities(): Collection<GrantedAuthority?> {
         val listRoles = mutableSetOf<RoleEntity>()
         if (this.role != null) {
-            listRoles.add(this.role)
+            listRoles.add(this.role!!)
         }
         return listRoles
 

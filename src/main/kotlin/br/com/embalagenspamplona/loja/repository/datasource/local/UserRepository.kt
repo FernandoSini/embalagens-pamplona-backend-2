@@ -14,7 +14,8 @@ import java.util.UUID
 @Repository
 interface UserRepository : JpaRepository<UserEntity, Long> {
 
-    fun findByEmail(email: String): Optional<UserEntity>
+    @Query("SELECT u from UserEntity u where u.email = :email")
+    fun findByEmail(@Param("email") email: String): Optional<UserEntity>
     
     fun findByEmailAndActiveTrue(email: String): Optional<UserEntity>
     
@@ -50,9 +51,9 @@ interface UserRepository : JpaRepository<UserEntity, Long> {
 
     @Modifying
     @Transactional
-    @Query("UPDATE UserEntity  u set u.active = false WHERE u.id =: userId")
+    @Query("UPDATE UserEntity  u set u.active = false WHERE u.id = :userId")
     fun deactivateUser(@Param("userId") userId:Long): Boolean
 
-    @Query("SELECT u from UserEntity u WHERE u.email =: userInfo OR u.name =: userInfo")
+    @Query("SELECT u from UserEntity u WHERE u.email = :userInfo OR u.name = :userInfo")
     fun findUserEntityByEmailOrName(@Param("userInfo") userInfo:String): Optional<UserEntity>
 }

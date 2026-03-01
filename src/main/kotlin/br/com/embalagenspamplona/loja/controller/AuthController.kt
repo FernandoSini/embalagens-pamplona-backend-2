@@ -34,7 +34,7 @@ class AuthController(private val authService: AuthService) {
     }
 
 
-    @PostMapping("/register")
+    @PostMapping("/register", produces = ["application/json","application/xml"])
     fun register(@RequestBody request: HashMap<String,Any>): ResponseEntity<ApiResponse<UserDTO>>{
         val response= authService.register(request)?:throw BadRequestException(Exception("Não foi possivel criar o usuário"))
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE,response["cookie"].toString()).body(ApiResponse.success(response["user"]!! as UserDTO))
