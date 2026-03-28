@@ -23,7 +23,7 @@ import java.time.ZonedDateTime
     val description: String = "",
 
     @Column(nullable = false, precision = 10, scale = 2)
-    val price: BigDecimal = BigDecimal("0.00"),
+    var price: BigDecimal = BigDecimal("0.00"),
 
     /*@Column(name = "promotional_price", precision = 10, scale = 2, nullable = true)
     val promoPrice: BigDecimal? = null,*/

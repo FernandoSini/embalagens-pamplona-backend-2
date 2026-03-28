@@ -50,7 +50,7 @@ class AuthServiceImpl(
         loginAttempts: Int
     ): HashMap<String, Any>? {
 
-        val attemptsKey = "$LOGIN_ATTEMPTS_KEY_PREFIX${request["username"].toString()}"
+        val attemptsKey = "$LOGIN_ATTEMPTS_KEY_PREFIX${request["email"].toString()}"
         val currentAttempts = when (val current = redisTemplate.opsForValue().get(attemptsKey)) {
             is Number -> current.toInt()
             is String -> current.toIntOrNull() ?: 0
@@ -64,20 +64,20 @@ class AuthServiceImpl(
 
             val authentication = authManager.authenticate(
                 UsernamePasswordAuthenticationToken(
-                    request["username"].toString(),
+                    request["email"].toString(),
                     request["password"].toString(),
                     )
             )
 
             if (authentication.isAuthenticated) {
                 redisTemplate.delete(attemptsKey)
-                val userDetailsCredentials = userService.loadUserByUsername(request["username"].toString())
+                val userDetailsCredentials = userService.loadUserByUsername(request["email"].toString())
                     ?: throw NotFoundException(Exception("Usuário não existe"))
 
                 val accessToken = createAccessToken(userDetailsCredentials)
                 val refreshToken = createRefreshToken(userDetailsCredentials)
 
-                val userDTO = userService.findByEmail(request["username"].toString())
+                val userDTO = userService.findByEmail(request["email"].toString())
                 if (userDTO == null) {
                     throw InternalServerException(Exception("Conseguimos encontrar as credencias mas tivemos um erro ao retornar usas informacoes"))
                 }
@@ -109,10 +109,7 @@ class AuthServiceImpl(
     }
 
 
-    override fun refreshTokens(
-        request: HashMap<String, Any>,
-        httpServletResponse: HttpServletResponse
-    ): HashMap<String, Any>? {
+    override fun refreshTokens(request: HashMap<String, Any>, httpServletResponse: HttpServletResponse): HashMap<String, Any>? {
         val userInfo = tokenService.getUserInfo(request["refreshToken"].toString())
         if (userInfo == null || !tokenService.isTokenValid(request["refreshToken"].toString(), userInfo)) {
             tokenService.deleteInvalidToken(request["refreshToken"].toString())
@@ -151,18 +148,16 @@ class AuthServiceImpl(
                 birthday = request["birthday"].toString(),
                 cpfCnpj = request["cpfcnpj"].toString()
             );
-            val role = roleService.findRoleById(1L)
+            val role = roleService.findRoleById(2L)
             userEntity.role = role
 
             val createdEntity = userService.createUser(userEntity)
 
             if (createdEntity != null) {
-
                 val authentication = authManager.authenticate(
                     UsernamePasswordAuthenticationToken(
                         request["email"].toString(),
                         request["password"].toString(),
-
                         )
                 )
                 if (authentication.isAuthenticated) {

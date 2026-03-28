@@ -25,7 +25,7 @@ class CatalogController(
         @RequestParam(name = "size", defaultValue = "5") size: Int
     ): ResponseEntity<ApiResponse<MutableSet<ProductDTO>>> {
         val catalog = catalogService.getCatalog(selectedCategory, page,size)
-        return ResponseEntity.ok(ApiResponse.success(catalog.content.toMutableSet()))
+        return ResponseEntity.ok(ApiResponse.success(catalog.result.toMutableSet()))
     }
 
 
@@ -41,7 +41,7 @@ class CatalogController(
         @RequestParam(defaultValue = "20") size: Int,
         @RequestParam(defaultValue = "name") sortBy: String,
         @RequestParam(defaultValue = "ASC") sortDirection: String
-    ): ResponseEntity<ApiResponse<CatalogSearchResult>> {
+    ): ResponseEntity<ApiResponse<PagedResponse<ProductDTO>>> {
         val filter = ProductFilterRequest(
             search = search,
             minPrice = minPrice,
@@ -54,5 +54,8 @@ class CatalogController(
         val result = catalogService.searchProducts(filter)
         return ResponseEntity.ok(ApiResponse.success(result))
     }
+
+
+    
 
 }

@@ -6,9 +6,10 @@ import java.util.UUID
 
 data class SegmentDTO(
     val id: Long = 0L,
-    val name: String ="",
+    val title: String ="",
     val description: String = "",
     val pill:String ="",
+    val icon:String="",
     val categories: MutableSet<CategoryDTO> = mutableSetOf(),
     val createdAt: ZonedDateTime = ZonedDateTime.now(),
     val updatedAt: ZonedDateTime? = null

@@ -1,8 +1,11 @@
 package br.com.embalagenspamplona.loja.services.impl
 
+import br.com.embalagenspamplona.loja.adapters.Mapper
+import br.com.embalagenspamplona.loja.data.dto.CategoryDTO
 import br.com.embalagenspamplona.loja.data.dto.ProductDTO
 import br.com.embalagenspamplona.loja.data.dto.PromotionDTO
 import br.com.embalagenspamplona.loja.data.dto.SegmentDTO
+import br.com.embalagenspamplona.loja.data.entities.CategoryEntity
 import br.com.embalagenspamplona.loja.data.entities.ProductEntity
 import br.com.embalagenspamplona.loja.data.entities.SegmentEntity
 import br.com.embalagenspamplona.loja.repository.datasource.local.ProductRepository
@@ -32,14 +35,16 @@ class SegmentServiceImpl(
     }
 
     override fun create(request: SegmentDTO): SegmentDTO {
-        if (segmentRepository.existsByTitleIgnoreCase(request.name)) {
+        if (segmentRepository.existsByTitleIgnoreCase(request.title)) {
             throw IllegalArgumentException("Já existe um segmento com este nome")
         }
 
         val segment = SegmentEntity(
-            title = request.name,
+            title = request.title,
             description = request.description,
             pill = request.pill,
+            icon = request.title[0].uppercase(),
+            categories = request.categories.map { e-> Mapper().mapTo(e, CategoryEntity::class.java) }.toMutableSet(),
             createdAt = ZonedDateTime.now(),
         )
         return segmentRepository.save(segment).toDTO()
@@ -50,9 +55,10 @@ class SegmentServiceImpl(
             .orElseThrow { EntityNotFoundException("Segmento não encontrado: ${request.id}") }
 
         val updatedSegment = segment.copy(
-            title = request.name ?: segment.title,
+            title = request.title ?: segment.title,
             description = request.description ?: segment.description,
-            pill = request.pill,
+            pill = request.pill?:segment.pill,
+            icon = request.title[0].uppercase()?: segment.icon,
             updatedAt = ZonedDateTime.now(),
         )
 
@@ -70,9 +76,10 @@ class SegmentServiceImpl(
     private fun SegmentEntity.toDTO(): SegmentDTO {
         return SegmentDTO(
             id = this.id,
-            name = this.title.toString(),
+            title = this.title.toString(),
             description = this.description,
             pill = this.pill,
+            icon = this.icon,
             createdAt = this.createdAt,
             updatedAt = this.updatedAt
         )
@@ -93,6 +100,12 @@ fun ProductEntity.toProductDTO(): ProductDTO {
             code = this.promotion?.code,
             startDate = this.promotion?.startsAt,
             endDate = this.promotion?.expiresAt
+        ),
+        category = CategoryDTO(
+            id= this.categoryEntity.id,
+            title = this.categoryEntity.title,
+            icon = this.categoryEntity.icon,
+            createdAt=this.categoryEntity.createdAt
         ),
         sku = this.sku,
         quantity = this.quantity,

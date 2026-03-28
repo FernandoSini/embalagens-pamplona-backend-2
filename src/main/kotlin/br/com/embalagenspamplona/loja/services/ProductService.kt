@@ -15,7 +15,7 @@ interface ProductService {
     fun findBySegmentId(segmentId: Long, page: Int, size: Int): PagedResponse<ProductDTO>
     fun search(query: String, page: Int, size: Int): PagedResponse<ProductDTO>
 
-    fun create(request: ProductDTO): ProductDTO
+    fun create(request: CreateProduct): ProductDTO
 
     fun update( request: ProductDTO): ProductDTO
 

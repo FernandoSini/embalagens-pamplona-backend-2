@@ -1,5 +1,6 @@
 package br.com.embalagenspamplona.loja.services.impl
 
+import br.com.embalagenspamplona.loja.data.entities.RoleEntity
 import br.com.embalagenspamplona.loja.exceptions.InternalServerException
 import br.com.embalagenspamplona.loja.services.TokenService
 import br.com.embalagenspamplona.loja.services.UserService
@@ -11,12 +12,14 @@ import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import jakarta.annotation.PostConstruct
 import jakarta.servlet.http.HttpServletRequest
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -27,6 +30,7 @@ import java.util.Arrays
 import java.util.Date
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import java.util.stream.Collectors
 import javax.crypto.spec.SecretKeySpec
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -49,6 +53,7 @@ class TokenServiceImpl(
     private val accessTokenExpiration: Long = 0L
 
     private lateinit var signingKey: SecretKeySpec
+    private val logger = LoggerFactory.getLogger(TokenServiceImpl::class.java)
     /* private lateinit var redisTemplate: RedisTemplate<String, Any>*/
 
 
@@ -75,6 +80,7 @@ class TokenServiceImpl(
         additionalClaims: HashMap<String, Any>
     ): String {
         val claims = Jwts.claims().subject(user.username).id(UUID.randomUUID().toString())
+        print(user.authorities)
         claims.add("roles", user.authorities).add(additionalClaims)
 
         val now = Date()
@@ -108,13 +114,14 @@ class TokenServiceImpl(
             val subject = Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).payload.subject
             val userInfo = userDetailsService.loadUserByUsername(subject)
             if (userInfo != null) {
-                return UsernamePasswordAuthenticationToken(userInfo, "", userInfo.authorities)
+                return UsernamePasswordAuthenticationToken(userInfo.username, userInfo.password, userInfo.authorities)
             } else {
                 throw UsernameNotFoundException("Usuário não encontrado para fazer autenticacao")
             }
-        } catch (e: Exception) {
+        } catch (e: JwtException) {
             throw Exception("Token jwt inválido! error:${e}");
         }
+
 
     }
 
@@ -128,7 +135,9 @@ class TokenServiceImpl(
                 return tokens["accessToken"].toString()
 
             } catch (e: Exception) {
-                throw InternalServerException(Exception("Erro ao processar token de acesso! Error: ${e.message}"))
+                println(e.message)
+                logger.debug("Erro ao criar token porque ja existe um! ${e.message}")
+                throw InternalServerException(Exception("Erro ao processar token de acesso! Token ja deve existir ou foi algum erro interno!"))
 
             }
         }

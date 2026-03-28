@@ -24,6 +24,8 @@ import java.util.UUID
 
     @Column(name = "pill")
     val pill:String="",
+    @Column(name ="icon")
+    val icon:String="",
 
     @ManyToMany(mappedBy = "segments")
     val categories: MutableSet<CategoryEntity> = mutableSetOf<CategoryEntity>(),
@@ -33,19 +35,22 @@ import java.util.UUID
     val createdAt: ZonedDateTime = ZonedDateTime.now(),
 
     @Column(name = "updated_at")
-    val updatedAt: ZonedDateTime = ZonedDateTime.now()
+    val updatedAt: ZonedDateTime? =null
 ) {
     fun copy(
         id: Long = this.id,
         title: String? = this.title,
         description: String = this.description,
         pill: String = this.pill,
+        icon:String = this.icon,
         categories: MutableSet<CategoryEntity> = this.categories,
         createdAt: ZonedDateTime = this.createdAt,
-        updatedAt: ZonedDateTime = this.updatedAt
+        updatedAt: ZonedDateTime? = this.updatedAt
     ) = SegmentEntity(
         id = id, title = title, description = description,
-        pill = pill, categories = categories,
+        pill = pill,
+        categories = categories,
+        icon= icon,
         createdAt = createdAt, updatedAt = updatedAt
     )
 }

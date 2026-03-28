@@ -56,4 +56,7 @@ interface UserRepository : JpaRepository<UserEntity, Long> {
 
     @Query("SELECT u from UserEntity u WHERE u.email = :userInfo OR u.name = :userInfo")
     fun findUserEntityByEmailOrName(@Param("userInfo") userInfo:String): Optional<UserEntity>
+
+    @Query("SELECT u from UserEntity u WHERE u.role.id = :roleId")
+    fun findUserByRole(@Param("roleId") roleId: Long): MutableSet<UserEntity>
 }

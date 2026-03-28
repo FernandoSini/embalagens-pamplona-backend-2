@@ -35,9 +35,10 @@ class UserServiceImpl(
                 val user = userRepository.findUserEntityByEmailOrName(data).orElseThrow {
                     throw NotFoundException(Exception("Usuário não encontrado com esse email"))
                 }
-                return User.builder().username(user.id.toString() ?: user.email)
+                return User.builder().username(user.email)
                     .password(user.password)
-                    .roles(user.authorities.toString())
+                    .roles(user.authorities.first()?.authority) //investigar o porque isso assim funciona e ter que ajustar pra receber uma lista de strings
+                    // mas baseado na nossa regra de negocios ele so vai poder ter 1role
                     .build()
             }
         } catch (e: Exception) {
@@ -123,5 +124,13 @@ class UserServiceImpl(
         }
     }
 
+    override fun findCustomers(): MutableSet<UserDTO> {
+        val users = userRepository.findUserByRole(2)
+        val userList = users.map { e-> Mapper().mapTo(e, UserDTO::class.java) }.toMutableSet()
+        if(userList.isEmpty()){
+            throw NotFoundException(Exception("Usuários não encontrados!"))
+        }
+        return userList
 
+    }
 }

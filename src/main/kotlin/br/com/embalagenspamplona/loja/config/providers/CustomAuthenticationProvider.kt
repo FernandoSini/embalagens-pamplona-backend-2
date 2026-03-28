@@ -24,7 +24,6 @@ class CustomAuthenticationProvider(private val userService: UserService): Authen
                 if(!BCryptPasswordEncoder().matches(password, userDetails.password) ){
                     throw BadCredentialsException("Senha inválida! Tente novamente!")
                 }
-
                 //lembrar que o authentication.authorities libera quando esta junto dos outros dois do principal e credentials
                 return UsernamePasswordAuthenticationToken(userDetails.username, userDetails.password, userDetails.authorities)
             } else {

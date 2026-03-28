@@ -9,7 +9,7 @@ interface CatalogService {
     fun getCatalog(selectedCategory: CategoryDTO?, page:Int, size:Int): PagedResponse<ProductDTO>
 
 
-    fun searchProducts(request: ProductFilterRequest): CatalogSearchResult
+    fun searchProducts(request: ProductFilterRequest): PagedResponse<ProductDTO>
 
 
 }

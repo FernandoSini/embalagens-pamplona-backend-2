@@ -7,6 +7,7 @@ import br.com.embalagenspamplona.loja.services.CustomerService
 import br.com.embalagenspamplona.loja.services.UserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import okhttp3.Response
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -154,5 +155,19 @@ class CustomerController(
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("E-mail não cadastrado!"))
         }
+    }
+
+    @GetMapping("/getCustomers", produces = ["application/json", "application/xml"])
+    fun getCustomers(): ResponseEntity<List<UserDTO>>{
+        try {
+
+
+            val customers = customerService.findCustomers()
+           return ResponseEntity.status(HttpStatus.OK).body(customers.toList());
+
+        }catch (e: Exception){
+            throw e;
+        }
+
     }
 }
