@@ -18,7 +18,7 @@ add . /app/embalagenspamplona
 workdir /app/embalagenspamplona
 
 #acessando o diretório e limpando ele
-run rm -rf /app/embagenspamplona/build
+run rm -rf /app/embalagenspamplona/build
 run ./gradlew clean
 copy ./build /app/embalagenspamplona/build
 #PRA REFERENCIAR O ARQUIVO JAR SEM NOME É USAR *.JAR
