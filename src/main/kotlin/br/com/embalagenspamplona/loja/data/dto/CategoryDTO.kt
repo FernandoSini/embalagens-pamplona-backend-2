@@ -16,12 +16,18 @@ import jakarta.persistence.TemporalType
 import java.time.ZonedDateTime
 
 data class CategoryDTO(
-
     var id: Long? = null,
     var title: String = "",
     var icon: String = "",
-    var createdAt: ZonedDateTime = ZonedDateTime.now(),
+    var descrption: String = "",
+    var createdAt: ZonedDateTime? = null,
     var updatedAt: ZonedDateTime = ZonedDateTime.now(),
-    val segments: MutableSet<SegmentEntity> = mutableSetOf(),
-    val products: MutableList<ProductEntity> = mutableListOf<ProductEntity>(),
+    val segments: MutableSet<SegmentEntity>? = null,
+    val products: MutableSet<ProductEntity>? = null,
+)
+
+data class CategoryPaginationRequest(
+    var page: Int = 0,
+    var limit: Int = 20,
+    var search: String? = null,
 )

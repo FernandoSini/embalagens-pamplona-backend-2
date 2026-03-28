@@ -40,15 +40,19 @@ class RoleEntity(
     private var updatedAt: ZonedDateTime? = null
 ) : GrantedAuthority, Serializable {
     override fun getAuthority(): String {
-        return name
+        return this.name
     }
 
     fun getDescription(): String {
-        return description;
+        return this.description;
     }
 
     fun addUser(user: UserEntity) {
         userList.add(user)
+    }
+
+    override fun toString(): String {
+        return this.name
     }
 
     fun copy(

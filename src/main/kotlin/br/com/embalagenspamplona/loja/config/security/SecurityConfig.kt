@@ -1,6 +1,7 @@
 package br.com.embalagenspamplona.loja.config.security
 
 import br.com.embalagenspamplona.loja.config.handlers.CustomAuthenticationEntryPoint
+import br.com.embalagenspamplona.loja.config.handlers.CustomLogoutSuccessHandler
 import br.com.embalagenspamplona.loja.config.handlers.CustomRedirectSuccessHandler
 
 import br.com.embalagenspamplona.loja.config.security.jwt.JwtProperties
@@ -14,6 +15,7 @@ import br.com.embalagenspamplona.loja.services.impl.UserServiceImpl
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpStatus
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.security.authentication.AuthenticationManager
@@ -31,12 +33,17 @@ import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
+import org.springframework.security.web.util.matcher.RequestMatcher
+import org.springframework.util.AntPathMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import org.springframework.web.util.pattern.PathPattern
 
 @Configuration
 @EnableConfigurationProperties(JwtProperties::class)
@@ -71,7 +78,7 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
                     "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**",
                     "/h2/**",
                     "/swagger",
-                    "/api/v1/products/**",
+                    "/api/v1/products/",
                     "/api/v1/segments/**",
                     "/api/v1/auth/**",
                     "/api/v1/payments/webhook",
@@ -83,13 +90,24 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
                     "/swagger-ui.html",
                     "/swagger-ui/index.html",
                     "/swagger-ui/**",
-
+                    "/api/v1/categories/**",
+                    "/error"
                     ).permitAll()
+
+                auth.requestMatchers(
+                    "/api/v1/categories/create",
+                    "/api/v1/categories/delete",
+                    "/api/v1/categories/update",
+                    "/api/v1/products/create",
+                    "/api/v1/products/update",
+                    "/api/v1/orders/client/",
+                    "/api/v1/orders/update").hasRole("admin")
                 // Endpoints que requerem autenticação
                 auth.requestMatchers(
                     "/api/v1/catalog/**",
                     "/api/v1/cart/**",
-                    "/api/v1/orders/**",
+                    "/api/v1/orders/cancel",
+                    "/api/v1/orders/id",
                     "/api/v1/customers/**",
                     "/api/v1/payments/**",
                 ).authenticated() // TODO: Alterar para authenticated() após implementar JWT
@@ -113,12 +131,14 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
             }
             /* .formLogin { it.successHandler(customAuthenticationSuccessHandler()) }*/
             .logout {
-                it.logoutUrl("/logout")
-                it.logoutSuccessUrl("/auth/login").invalidateHttpSession(true)
+                it.logoutUrl("/api/v1/auth/logout").permitAll()
+                    .invalidateHttpSession(true)
                     .deleteCookies("JSESSIONID")
                     .deleteCookies("SESSID")
                     .deleteCookies("tokens")
-
+                    .clearAuthentication(true)
+                    .logoutSuccessUrl("/api/v1/auth/logout/success").permitAll()
+                    .logoutSuccessHandler(customLogoutSuccessHandler())
             }
 
         return http.build()
@@ -127,7 +147,8 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("*")
+     //   configuration.allowedOrigins = listOf("*")
+        configuration.allowedOriginPatterns = listOf("*")
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
         configuration.exposedHeaders = listOf("Authorization")
@@ -146,6 +167,10 @@ class SecurityConfig(private val authenticationProvider: AuthenticationProvider)
     @Bean
     fun customAuthenticationSuccessHandler(): AuthenticationSuccessHandler {
         return CustomRedirectSuccessHandler()
+    }
+    @Bean
+    fun customLogoutSuccessHandler(): LogoutSuccessHandler{
+        return CustomLogoutSuccessHandler()
     }
 
     @Bean

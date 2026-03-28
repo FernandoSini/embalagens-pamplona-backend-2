@@ -38,70 +38,99 @@ import kotlin.jvm.Throws
 class JwtFilter(private val tokenService: TokenService) : GenericFilterBean() {
 
 
-    @Throws(exceptionClasses = [Exception::class, JwtException::class, ForbiddenException::class, BadRequestException::class, NotFoundException::class])
+    @Throws(exceptionClasses = [Exception::class, JwtException::class, ForbiddenException::class, BadRequestException::class, NotFoundException::class, InternalServerException::class])
     override fun doFilter(
-        request: ServletRequest?,
-        response: ServletResponse?,
-        filter: FilterChain?
+        request: ServletRequest?, response: ServletResponse?, filter: FilterChain?
     ) {
-        val resolvedToken = tokenService.resolveToken(request as HttpServletRequest)
+        try {
+            val resolvedToken = tokenService.resolveToken(request as HttpServletRequest)
 
-
-            try {
-                if (resolvedToken != null && tokenService.isTokenValid(resolvedToken, null)) {
+            if (resolvedToken != null && tokenService.isTokenValid(resolvedToken, null)) {
                 val authentication = tokenService.getAuthentication(resolvedToken, null)
                 if (authentication != null) {
                     updateContext(authentication, request)
                 } else {
                     throw NotFoundException(Exception("User not found on auth!"))
                 }
-        }
-                filter?.doFilter(request, response)
-            } catch (e: JwtException) {
-                (response as HttpServletResponse).status = HttpStatus.BAD_REQUEST.value()
-                (response).writer.print("JwtException" + e.message.toString())
-                throw InternalServerException(Exception("Jwt exception: ${response.status}, ${response.writer}"))
-            } catch (ex: MalformedJwtException) {
-                SecurityContextHolder.clearContext()
-                (response as HttpServletResponse).status = HttpStatus.BAD_REQUEST.value()
-                response.writer.printf("Malformed token: " + ex.message)
-                throw BadRequestException(Exception("Token mal formado! Erro: ${response.status},${response.writer} "))
-            } catch (ex: UsernameNotFoundException) {
-                SecurityContextHolder.clearContext()
-                (response as HttpServletResponse).status = HttpStatus.NOT_FOUND.value()
-                response.writer.printf("Not found user to chain token: " + ex.message)
-                throw NotFoundException(Exception("Usuário não encontrado!"))
-            } catch (e: Exception) {
-                SecurityContextHolder.clearContext()
-                (response as HttpServletResponse).status = HttpStatus.INTERNAL_SERVER_ERROR.value()
-                response.contentType = MediaType.APPLICATION_JSON_VALUE
-                response.characterEncoding = "UTF-8"
-                response.writer?.write(
-                    ObjectMapper().writeValueAsString(
-                        mapOf(
-                            "status" to HttpStatus.UNAUTHORIZED.name.replaceFirstChar {
-                                if (it.isLowerCase()) it.titlecase() else it.toString()
-                            },
-                            "statusCode" to HttpStatus.UNAUTHORIZED.value(),
-                            "message" to "Erro Interno: ${e.message}",
-                            "timestamp" to ZonedDateTime.now().toLocalDateTime().truncatedTo(ChronoUnit.SECONDS)
-                                .toString()
+            }
+            filter?.doFilter(request, response)
+        } catch (e: JwtException) {
+            SecurityContextHolder.clearContext()
+            (response as HttpServletResponse).status = HttpStatus.BAD_REQUEST.value()
+            response.contentType = MediaType.APPLICATION_JSON_VALUE
+            response.characterEncoding = "UTF-8"
+            response.writer?.write(
+                ObjectMapper().writeValueAsString(
+                    mapOf(
+                        "status" to HttpStatus.BAD_REQUEST.name.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase() else it.toString()
+                        },
+                        "statusCode" to HttpStatus.BAD_REQUEST.value(),
+                        "message" to "${e.message}",
+                        "timestamp" to ZonedDateTime.now().toLocalDateTime().truncatedTo(ChronoUnit.SECONDS).toString()
 
-                        )
                     )
-
                 )
 
-            }
+            )
+            //throw InternalServerException(Exception("Jwt exception: ${response.status}, ${response.writer}"))
+        } catch (ex: MalformedJwtException) {
+            SecurityContextHolder.clearContext()
+            (response as HttpServletResponse).status = HttpStatus.BAD_REQUEST.value()
+            response.writer.printf("Malformed token: " + ex.message)
+            throw BadRequestException(Exception("Token mal formado! Erro: ${response.status},${response.writer} "))
+        } catch (ex: UsernameNotFoundException) {
+            SecurityContextHolder.clearContext()
+            (response as HttpServletResponse).status = HttpStatus.NOT_FOUND.value()
+            response.writer.printf("Not found user to chain token: " + ex.message)
+            throw NotFoundException(Exception("Usuário não encontrado!"))
+        } catch (e: InternalServerException) {
+            SecurityContextHolder.clearContext()
+            (response as HttpServletResponse).status = HttpStatus.INTERNAL_SERVER_ERROR.value()
+            response.contentType = MediaType.APPLICATION_JSON_VALUE
+            response.characterEncoding = "UTF-8"
+            response.writer?.write(
+                ObjectMapper().writeValueAsString(
+                    mapOf(
+                        "status" to HttpStatus.INTERNAL_SERVER_ERROR.name.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase() else it.toString()
+                        },
+                        "statusCode" to HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        "message" to "${e.message}",
+                        "timestamp" to ZonedDateTime.now().toLocalDateTime().truncatedTo(ChronoUnit.SECONDS).toString()
 
+                    )
+                )
 
+            )
 
+        } catch (e: Exception) {
+            SecurityContextHolder.clearContext()
+            (response as HttpServletResponse).status = HttpStatus.INTERNAL_SERVER_ERROR.value()
+            response.contentType = MediaType.APPLICATION_JSON_VALUE
+            response.characterEncoding = "UTF-8"
+            response.writer?.write(
+                ObjectMapper().writeValueAsString(
+                    mapOf(
+                        "status" to HttpStatus.UNAUTHORIZED.name.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase() else it.toString()
+                        },
+                        "statusCode" to HttpStatus.UNAUTHORIZED.value(),
+                        "message" to "Erro Interno: ${e.message}",
+                        "timestamp" to ZonedDateTime.now().toLocalDateTime().truncatedTo(ChronoUnit.SECONDS).toString()
 
+                    )
+                )
+
+            )
+
+        }
     }
 
 
     private fun updateContext(authFound: Authentication, request: HttpServletRequest?) {
-        val authToken = UsernamePasswordAuthenticationToken(authFound.principal, null, authFound.authorities)
+        print("caralho ${authFound.authorities.first().authority.first()}")
+        val authToken = UsernamePasswordAuthenticationToken(authFound.principal, authFound.credentials, authFound.authorities)
         authToken.details = WebAuthenticationDetailsSource().buildDetails(request)
         SecurityContextHolder.getContext().authentication = authToken
     }

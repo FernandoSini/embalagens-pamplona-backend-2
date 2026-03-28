@@ -15,5 +15,6 @@ interface UserService {
     fun update(userObject: UserDTO): Boolean
     fun deleteUser(userId: Long): Boolean
     fun deactivateAccount(userId: Long): Boolean
+    fun findCustomers(): MutableSet<UserDTO>
 
 }

@@ -41,6 +41,9 @@ interface ProductRepository : JpaRepository<ProductEntity, Long>, JpaSpecificati
 
     fun findBySkuIgnoreCase(sku: String): ProductEntity?
 
+    @Query("SELECT p from ProductEntity p where p.name = :search or p.sku = :search or p.categoryEntity.title = :search")
+    fun findAllByNameOrSku(@Param("search") search:String, pageable: Pageable):Page<ProductEntity>
+
 
 
     /* @Query("SELECT p FROM ProductEntity p WHERE p.quantity <= :threshold AND p.active = true")

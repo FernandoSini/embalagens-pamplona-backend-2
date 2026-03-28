@@ -20,8 +20,8 @@ class SegmentController(
     @GetMapping
     @Operation(summary = "Listar todos os segmentos ativos")
     fun findAll(
-        @RequestParam(value = "page", defaultValue = "0", required = true) page: Long = 0L,
-        @RequestParam(value = "size", defaultValue = "5", required = true) pageSize:Long=0L
+        @RequestParam(value = "page", defaultValue = "0", required = false) page: Long,
+        @RequestParam(value = "limit", defaultValue = "20", required = false) size:Long
     ): ResponseEntity<ApiResponse<List<SegmentDTO>>> {
         val segments = segmentService.findAll()
         return ResponseEntity.ok(ApiResponse.success(segments))
@@ -36,7 +36,7 @@ class SegmentController(
     }
 
 
-    @PostMapping("/create-segment")
+    @PostMapping("/create")
     @Operation(summary = "Criar novo segmento")
     fun create(@RequestBody request: SegmentDTO): ResponseEntity<ApiResponse<Any>> {
         val segment = segmentService.create(request)
@@ -44,7 +44,7 @@ class SegmentController(
             .body(ApiResponse.success(intArrayOf(), "Segmento criado com sucesso"))
     }
 
-    @PutMapping("/update-segment")
+    @PutMapping("/update")
     @Operation(summary = "Atualizar segmento")
     fun update(
         @RequestBody request: SegmentDTO

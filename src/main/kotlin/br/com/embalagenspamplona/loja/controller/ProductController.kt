@@ -38,11 +38,11 @@ class ProductController(
         }
     }
 
-    @GetMapping
+    @GetMapping("/")
     @Operation(summary = "Listar produtos com paginação e filtros")
     fun findAll(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "0", required = false) page: Int,
+        @RequestParam(defaultValue = "20", required = false) limit: Int,
         @RequestParam(required = false) segmentId: Long?,
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) minPrice: BigDecimal?,
@@ -51,12 +51,11 @@ class ProductController(
         @RequestParam(defaultValue = "ASC") sortDirection: String
     ): ResponseEntity<ApiResponse<PagedResponse<ProductDTO>>> {
         val filter = ProductFilterRequest(
-
             search = search,
             minPrice = minPrice,
             maxPrice = maxPrice,
             page = page,
-            size = size,
+            size = limit,
             sortBy = sortBy,
             sortDirection = sortDirection
         )
@@ -94,16 +93,17 @@ class ProductController(
         return ResponseEntity.ok(ApiResponse.success(products))
     }
 
-    @PostMapping("/create")
+    @PostMapping("/create", produces = ["application/json", "application/xml"], consumes = ["application/json"])
     @Operation(summary = "Criar novo produto")
-    fun create(@RequestBody request: ProductDTO): ResponseEntity<ApiResponse<Any>> {
-        val dto= Mapper().mapTo(request::class.java, ProductDTO::class.java )
+    fun create(@RequestBody request: CreateProduct): ResponseEntity<ApiResponse<Any>> {
+      /*  val dto= Mapper().mapTo(request::class.java, ProductDTO::class.java )
         if (dto==null){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Erro na conversao de dados"))
-        }
-        val product = productService.create(dto)
+        }*/
+        val product = productService.create(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(product, "Produto criado com sucesso"))
     }
+
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar produto")
@@ -139,5 +139,12 @@ class ProductController(
         return ResponseEntity.ok(ApiResponse.success(product, "Estoque atualizado com sucesso"))
     }*/
 
+   /* @GetMapping("/{id}")
+    fun getProduct(@PathVariable("id") id: Long): ResponseEntity<ProductDTO>{
+        val product = productService.findById(id)
+
+        return ResponseEntity.status(HttpStatus.OK).body(product)
+
+    }*/
 
 }

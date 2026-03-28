@@ -5,13 +5,11 @@ import br.com.embalagenspamplona.loja.data.dto.*
 
 interface CustomerService {
     
-    fun findById(id: Long): CustomerDTO
+    fun findById(id: Long): UserDTO
     
     fun findByEmail(email: String): CustomerDTO
 
-    fun create(request: CreateCustomerRequest): CustomerDTO
-    
-    fun update(id: Long, request: UserDTO): CustomerDTO
+    fun update(id: Long, request: UserDTO): UserDTO
     
     fun delete(id: Long)
     
@@ -26,4 +24,5 @@ interface CustomerService {
     fun getAddresses(customerId: Long): List<AddressDTO>
     
     fun existsByEmail(email: String): Boolean
+    fun getCustomers(): List<UserDTO>
 }

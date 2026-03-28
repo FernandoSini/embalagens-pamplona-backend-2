@@ -37,7 +37,7 @@ class OrderServiceImpl(
         val orderPage = orderRepository.findByUserEmail(clientEmail, pageRequest)
 
         return PagedResponse(
-            content = orderPage.content.map { it.toDTO() },
+            result = orderPage.content.map { it.toDTO() },
             totalElements = orderPage.totalElements,
             totalPages = orderPage.totalPages,
             currentPage = orderPage.number,
@@ -64,7 +64,7 @@ class OrderServiceImpl(
         }
 
         return PagedResponse(
-            content = orderPage.content.map { it.toDTO() },
+            result = orderPage.content.map { it.toDTO() },
             totalElements = orderPage.totalElements,
             totalPages = orderPage.totalPages,
             currentPage = orderPage.number,

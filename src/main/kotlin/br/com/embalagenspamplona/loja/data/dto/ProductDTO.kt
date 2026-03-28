@@ -14,6 +14,7 @@ data class ProductDTO(
     val promotion: PromotionDTO? = null,
     val quantity: Int = 0,
     val sku: String? = null,
+    val category: CategoryDTO? = null,
     val createdAt: ZonedDateTime? = null,
     val updatedAt: ZonedDateTime? = null,
     val images: List<ImageDTO> = emptyList(),
@@ -36,6 +37,21 @@ data class ProductDTO(
         get() = promoPrice != null && promoPrice < price*/
 }
 
+
+data class CreateProduct(
+    val id: Long? = null,
+    val name: String="",
+    val description: String="",
+    val price: String = "",
+    val promotion: PromotionDTO? = null,
+    val quantity: Int = 0,
+    val sku: String? = null,
+    val category: CategoryDTO? = null,
+    val createdAt: ZonedDateTime? = null,
+    val updatedAt: ZonedDateTime? = null,
+    val images: List<ImageDTO> = emptyList(),
+    val pack: String? = null,
+)
 data class CreateProductRequest(
     val name: String,
     val description: String? = null,

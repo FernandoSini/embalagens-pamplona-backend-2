@@ -30,6 +30,9 @@ class CategoryEntity(
     @Column(name = "icon")
     var icon: String = "",
 
+    @Column("description")
+    var description:String="",
+
 
     @Column(name = "created_at")
     var createdAt: ZonedDateTime = ZonedDateTime.now(),

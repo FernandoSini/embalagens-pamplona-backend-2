@@ -2,10 +2,13 @@ package br.com.embalagenspamplona.loja.services.impl
 
 import br.com.embalagenspamplona.loja.adapters.Mapper
 import br.com.embalagenspamplona.loja.data.dto.*
+import br.com.embalagenspamplona.loja.data.entities.CategoryEntity
 import br.com.embalagenspamplona.loja.data.entities.ImageEntity
 import br.com.embalagenspamplona.loja.data.entities.ProductEntity
 import br.com.embalagenspamplona.loja.data.entities.PromotionEntity
 import br.com.embalagenspamplona.loja.exceptions.InternalServerException
+import br.com.embalagenspamplona.loja.exceptions.NotFoundException
+import br.com.embalagenspamplona.loja.repository.datasource.local.CategoryRepository
 import br.com.embalagenspamplona.loja.repository.datasource.local.ImageRepository
 import br.com.embalagenspamplona.loja.repository.datasource.local.ProductRepository
 import br.com.embalagenspamplona.loja.repository.datasource.local.PromotionRepository
@@ -17,18 +20,24 @@ import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
+import kotlin.jvm.optionals.getOrNull
 
 @Service
 @Transactional
 class ProductServiceImpl(
     private val productRepository: ProductRepository,
     private val promotionRepository: PromotionRepository,
+    private val categoryRepository: CategoryRepository,
     private val imageRepository: ImageRepository,
     private val r2Service: R2Service,
     private val segmentRepository: SegmentRepository
@@ -45,7 +54,7 @@ class ProductServiceImpl(
         val page = productRepository.findAll(pageRequest)
 
         return PagedResponse(
-            content = page.content.map { it.toProductDTO() },
+            result = page.content.map { it.toProductDTO() },
             totalElements = page.totalElements,
             totalPages = page.totalPages,
             currentPage = page.number,
@@ -62,7 +71,7 @@ class ProductServiceImpl(
         val page = productRepository.findAll(pageRequest)
 
         return PagedResponse(
-            content = page.content.map { it.toProductDTO() },
+            result = page.content.map { it.toProductDTO() },
             totalElements = page.totalElements,
             totalPages = page.totalPages,
             currentPage = page.number,
@@ -78,11 +87,11 @@ class ProductServiceImpl(
             .toProductDTO()
     }
 
-    override fun findByCategoryId(id: Long, page:Int,size:Int): PagedResponse<ProductDTO> {
+    override fun findByCategoryId(id: Long, page: Int, size: Int): PagedResponse<ProductDTO> {
         val pageRequest: Pageable = PageRequest.of(page, size)
-        val productPage  =productRepository.findProductEntityByCategoryEntityId(id, pageRequest)
+        val productPage = productRepository.findProductEntityByCategoryEntityId(id, pageRequest)
         return PagedResponse(
-            content = productPage.content.map { it },
+            result = productPage.content.map { it },
             totalElements = productPage.totalElements,
             totalPages = productPage.totalPages,
             currentPage = productPage.number,
@@ -97,7 +106,7 @@ class ProductServiceImpl(
         val productPage = productRepository.findProductEntityByCategoryEntitySegments(segmentId, pageRequest)
 
         return PagedResponse(
-            content = productPage.content.map { it.toProductDTO() },
+            result = productPage.content.map { it.toProductDTO() },
             totalElements = productPage.totalElements,
             totalPages = productPage.totalPages,
             currentPage = productPage.number,
@@ -112,7 +121,7 @@ class ProductServiceImpl(
         val productPage = productRepository.searchByNameOrDescription(query, pageRequest)
 
         return PagedResponse(
-            content = productPage.content.map { it.toProductDTO() },
+            result = productPage.content.map { it.toProductDTO() },
             totalElements = productPage.totalElements,
             totalPages = productPage.totalPages,
             currentPage = productPage.number,
@@ -122,55 +131,86 @@ class ProductServiceImpl(
         )
     }
 
-    override fun create(request: ProductDTO): ProductDTO {
+    override fun create(request: CreateProduct): ProductDTO {
         val mapper = Mapper()
         try {
-            val product = mapper.mapTo(request::class.java, ProductEntity::class.java)
-            if (product != null) {
-                if (product.promotion != null) {
-                    val promotion =
-
-                        PromotionEntity(
-                            id = product.promotion.id,
-                            description = product.promotion.description,
-                            code = product.promotion.code,
-                            price = product.promotion.price,
-                            startsAt = product.promotion.startsAt,
-                            expiresAt = product.promotion.expiresAt,
-                        )
+            val product = mapper.mapTo(request, ProductEntity::class.java)
 
 
-                    val savedPromotion = promotionRepository.save(promotion)
-                    val productWithPromotions = product.copy(promotion = savedPromotion)
-                    val savedProduct = productRepository.save(productWithPromotions)
-
-                    if (request.images.isNotEmpty()) {
-                        val imageEntities = request.images.map { dto ->
-                            ImageEntity(
-                                url = dto.url,
-                                product = savedProduct
-                            )
-                        }
-                        imageRepository.saveAll(imageEntities)
-                    }
-
-                    return savedProduct.toProductDTO()
-                } else {
-                    if (request.images.isNotEmpty()) {
-                        val imageEntities = request.images.map { dto ->
-                            ImageEntity(
-                                url = dto.url,
-                                product = product
-                            )
-                        }
-                        imageRepository.saveAll(imageEntities)
-                    }
-
-                    return productRepository.save(product).toProductDTO()
-
+            product.price = BigDecimal(request.price).divide(BigDecimal("1000000"), 2, RoundingMode.UNNECESSARY)
+            //ajustar o tratamento para quando tiver promotion e category juntos
+            if (product.promotion != null) {
+                var existedCategory = categoryRepository.findCategoryById(request.category!!.id!!)
+                existedCategory?.title = request.category.title
+                existedCategory?.icon = request.category.title[0].uppercase()
+                if(existedCategory == null){
+                    val category = CategoryEntity(
+                        id = request.category.id,
+                        title = request.category.title,
+                        icon = request.category.title[0].uppercase(),
+                        description = request.category.descrption)
+                    existedCategory = categoryRepository.save(category)
                 }
+                product.categoryEntity=existedCategory!!
+                val createdProduct = productRepository.save(product)
+
+                val promotion =
+                    PromotionEntity(
+                        id = product.promotion.id,
+                        description = product.promotion.description,
+                        code = product.promotion.code,
+                        price = product.promotion.price,
+                        startsAt = product.promotion.startsAt,
+                        expiresAt = product.promotion.expiresAt,
+                        product = createdProduct)
+
+
+                val savedPromotion = promotionRepository.save(promotion)
+                val productWithPromotions = createdProduct.copy(promotion = savedPromotion)
+                val savedProduct = productRepository.save(productWithPromotions)
+
+                if (request.images.isNotEmpty()) {
+                    val imageEntities = request.images.map { dto ->
+                        ImageEntity(
+                            url = dto.url,
+                            product = savedProduct
+                        )
+                    }
+                    imageRepository.saveAll(imageEntities)
+                }
+
+                return savedProduct.toProductDTO()
+
+
             } else {
-                throw InternalServerException(Exception("Erro na conversao do produto!"))
+
+                if (request.images.isNotEmpty()) {
+                    val imageEntities = request.images.map { dto ->
+                        ImageEntity(
+                            url = dto.url,
+                            product = product
+                        )
+                    }
+                    imageRepository.saveAll(imageEntities)
+                }
+                var existedCategory = categoryRepository.findCategoryById(request.category!!.id!!)
+                existedCategory?.title=request.category.title
+                existedCategory?.icon=request.category.title[0].uppercase();
+                existedCategory?.description = request.category.descrption;
+                if (existedCategory == null) {
+                    val category = CategoryEntity(
+                        id = request.category.id,
+                        title = request.category.title,
+                        icon = request.category.title[0].uppercase(),
+                        description = request.category.descrption
+                    )
+                    existedCategory = categoryRepository.save(category)
+                }
+
+                product.categoryEntity = existedCategory!!
+
+                return productRepository.save(product).toProductDTO()
+
             }
         } catch (e: Exception) {
             throw InternalServerException(Exception("Não foi possivel criar produto: ${e.message}"))

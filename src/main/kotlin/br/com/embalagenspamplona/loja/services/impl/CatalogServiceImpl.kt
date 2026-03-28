@@ -27,7 +27,7 @@ class CatalogServiceImpl(
         val pagedResult =
             productService.findBySegmentId(selectedSegment.id, pageRequest.pageNumber, pageRequest.pageSize)
         return PagedResponse(
-            content = pagedResult.content,
+            result = pagedResult.result,
             totalPages = pagedResult.totalPages,
             totalElements = pagedResult.totalElements,
             size = pagedResult.size,
@@ -57,7 +57,7 @@ class CatalogServiceImpl(
     }
 
 
-    override fun searchProducts(request: ProductFilterRequest): CatalogSearchResult {
+    override fun searchProducts(request: ProductFilterRequest): PagedResponse<ProductDTO> {
         val sort = Sort.by(
             if (request.sortDirection.equals("DESC", ignoreCase = true)) Sort.Direction.DESC
             else Sort.Direction.ASC,
@@ -72,13 +72,14 @@ class CatalogServiceImpl(
             productService.findBySegmentId(request.segmentId ?: 0L, pageRequest.pageNumber, pageRequest.pageSize)
         }
 
-        return CatalogSearchResult(
-            products = page.content.map { it },
+        return PagedResponse(
+            result = page.result.map { it },
             totalElements = page.totalElements,
             totalPages = page.totalPages,
             currentPage = page.currentPage,
             hasNext = page.hasNext,
-            hasPrevious = page.hasPrevious
+            hasPrevious = page.hasPrevious,
+            size = page.size
         )
     }
 
