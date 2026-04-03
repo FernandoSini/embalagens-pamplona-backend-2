@@ -10,7 +10,7 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
-/rascunhos
+rascunhos/
 .env.dev
 .env
 build/
@@ -18,6 +18,8 @@ build/
 .gradle/
 src/main/resources/application-dev-local.properties
 /.gradle
+gradle/
+.idea/
 # Package Files #
 *.jar
 *.war
